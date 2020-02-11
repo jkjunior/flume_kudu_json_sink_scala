@@ -1,0 +1,55 @@
+plugins {
+    id 'scala'
+}
+
+group 'org.example'
+version '1.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://repository.cloudera.com/artifactory/cloudera-repos/"
+    }
+}
+
+def scalaVersion = '2.13.1'
+def kuduVersion = '1.10.0-cdh6.3.1'
+def flumeVersion = '1.9.0-cdh6.3.1'
+def jacksonVersion = '2.10.2'
+
+dependencies {
+    implementation "org.scala-lang:scala-library:$scalaVersion"
+    implementation "org.apache.kudu:kudu-flume-sink:$kuduVersion"
+    implementation "org.apache.kudu:kudu-client:$kuduVersion"
+    implementation "commons-codec:commons-codec:1.14"
+    implementation "org.apache.flume:flume-ng-core:$flumeVersion"
+    implementation "org.apache.flume:flume-ng-configuration:$flumeVersion"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+    implementation "com.fasterxml.jackson.module:jackson-module-scala_2.13:$jacksonVersion"
+    implementation "com.google.guava:guava:28.2-jre"
+}
+
+task uberjar(type: Jar) {
+    eachFile { it.duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+//	def dd = new Date().parse('yyyy-MM-dd', new Date().format('yyyy-MM-dd'))
+//	def mm = ( (new Date().getTime() - dd.getTime())/1000/60 ).toInteger()
+    baseName = project.name.toLowerCase()// + "_${dd.format('yyyyMMdd')}_$mm"
+    manifest {
+        attributes	'Implementation-Title': 'Flume Kudu Sink Json Producer',
+                'Main-Class': 'flume.kudu.sink.JsonKuduOperationsProducer',
+//					'Implementation-Version': version,
+                'Built-Date': new Date().format('yyyy-MM-dd HH:mm:ss'),
+                'Java-JDK': System.getProperty('java.version'),
+                'Java-Vendor': System.getProperty('java.vm.vendor'),
+                'UUID': java.util.UUID.randomUUID().toString().toUpperCase()
+    }
+    sourceSets.getByName('main').runtimeClasspath
+    from(configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }){
+        exclude 'META-INF/INDEX.LIST','META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.MF'
+        exclude 'META-INF/LICENSE*/','META-INF/NOTICE*/','META-INF/DEPENDENCIES/'
+        exclude 'META-INF/license/','META-INF/maven/', 'META-INF/services/' //, 'META-INF/native/'
+//		exclude 'LICENSE*','NOTICE','scala-*.properties'
+    } with jar
+}
