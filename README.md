@@ -1,0 +1,1 @@
+# flume_kudu_sink_scala
